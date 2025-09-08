@@ -1,0 +1,78 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ownedRooms   Room[]         @relation("RoomOwner")
+  queuedVideos QueuedVideo[]
+  votes        Vote[]
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String   // e.g., "Chill Lo-fi Beats"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation to the user who created the room
+  ownerId String
+  owner   User   @relation("RoomOwner", fields: [ownerId], references: [id])
+
+  // Relation to the videos in this room's queue
+  queue QueuedVideo[]
+}
+
+model QueuedVideo {
+  id        String   @id @default(cuid())
+  youtubeId String   // The 11-character YouTube video ID
+  title     String
+  duration  Int      // Duration in seconds
+  thumbnail String   // URL to the video thumbnail
+  createdAt DateTime @default(now())
+
+  // Relation to the user who added the video
+  addedById String
+  addedBy   User   @relation(fields: [addedById], references: [id])
+
+  // Relation to the room it belongs to
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  // Relation to votes
+  votes Vote[]
+
+  // You can add an 'order' field if you want to persist the queue order
+  // order Int
+}
+
+model Vote {
+  id String @id @default(cuid())
+
+  // The user who voted
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The video that was voted for
+  videoId String
+  video   QueuedVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Ensure a user can only vote once per video
+  @@unique([userId, videoId])
+}
