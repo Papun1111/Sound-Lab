@@ -6,6 +6,7 @@ import { useRoomStore } from '@/store/useRoomStore';
 import { Socket } from 'socket.io-client';
 import { FaStepForward } from 'react-icons/fa';
 import { useParams } from 'next/navigation';
+import { useSpring, animated } from '@react-spring/web'; // Import for animation
 
 interface PlayerProps {
   socket: Socket | null;
@@ -13,7 +14,8 @@ interface PlayerProps {
 
 export const Player: React.FC<PlayerProps> = ({ socket }) => {
   const currentlyPlaying = useRoomStore((state) => state.currentlyPlaying);
-  const {roomId} =useParams();
+  const params = useParams();
+  const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
 
   const handleNextVideo = () => {
     if (socket && roomId) {
@@ -21,9 +23,18 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     }
   };
 
+  // ✨ ANIMATION LOGIC: Fade and scale in the player when a new video starts ✨
+  const playerAnimation = useSpring({
+    from: { opacity: 0, transform: 'scale(0.95)' },
+    to: { opacity: 1, transform: 'scale(1)' },
+    // Re-trigger the animation every time the video ID changes
+    key: currentlyPlaying?.video.id, 
+    config: { tension: 280, friction: 30 },
+  });
+
   if (!currentlyPlaying) {
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-lg bg-gray-800 text-gray-400">
+      <div className="flex aspect-video w-full items-center justify-center rounded-lg bg-gray-900 border-2 border-dashed border-purple-800 text-purple-400">
         <p>Nothing is playing. Add a video to the queue to get started!</p>
       </div>
     );
@@ -41,7 +52,7 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
   };
 
   return (
-    <div className="w-full">
+    <animated.div style={playerAnimation} className="w-full">
       <div className="relative aspect-video overflow-hidden rounded-lg shadow-2xl">
         <YouTube
           key={currentlyPlaying.video.id}
@@ -55,15 +66,16 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
         <h2 className="text-xl font-bold text-white flex-1 truncate" title={currentlyPlaying.video.title}>
           {currentlyPlaying.video.title}
         </h2>
+        {/* ✨ THEME UPDATE: Changed button color to purple ✨ */}
         <button
           onClick={handleNextVideo}
-          className="flex-shrink-0 rounded-full bg-indigo-600 p-3 text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+          className="flex-shrink-0 rounded-full bg-purple-600 p-3 text-white transition-colors hover:bg-purple-500 disabled:opacity-50"
           title="Next Video"
         >
           <FaStepForward className="h-5 w-5" />
         </button>
       </div>
-    </div>
+    </animated.div>
   );
 };
 

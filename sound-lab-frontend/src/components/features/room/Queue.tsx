@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { FaThumbsUp } from 'react-icons/fa';
 import { AxiosError } from 'axios';
 import { Socket } from 'socket.io-client';
+import { useTransition, animated } from '@react-spring/web'; // Import for animation
 
 interface QueueProps {
   socket: Socket | null;
@@ -38,7 +39,6 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
     setError(null);
 
     try {
-      // The API call now triggers the backend to broadcast the update
       await addVideoToRoom(roomId, youtubeUrl, token);
       setYoutubeUrl('');
     } catch (err) {
@@ -58,9 +58,19 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
     }
   };
 
+  // ✨ ANIMATION LOGIC using react-spring's useTransition hook ✨
+  const transitions = useTransition(queue, {
+    from: { opacity: 0, transform: 'translateY(20px)' },
+    enter: { opacity: 1, transform: 'translateY(0px)' },
+    leave: { opacity: 0, transform: 'translateY(-20px)' },
+    keys: item => item.id, // Use video ID as the key for stable animations
+    trail: 50, // Stagger the animations slightly
+  });
+
   return (
-    <div className="flex h-full flex-col rounded-lg bg-gray-800 p-4">
-      <h3 className="mb-4 text-lg font-bold text-white">Up Next</h3>
+    // ✨ THEME UPDATE: Changed colors to a purple theme ✨
+    <div className="flex h-full flex-col rounded-lg bg-gray-900 border border-purple-800 p-4 shadow-lg">
+      <h3 className="mb-4 text-lg font-bold text-purple-300">Up Next</h3>
       
       <form onSubmit={handleAddVideo} className="mb-4 flex gap-2">
         <Input
@@ -68,39 +78,45 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
           value={youtubeUrl}
           onChange={(e) => setYoutubeUrl(e.target.value)}
           placeholder="Paste YouTube URL"
-          className="bg-gray-700 text-white border-gray-600"
+          className="bg-gray-800 text-white border-purple-700 focus:ring-purple-500"
           disabled={isLoading}
         />
-        <Button type="submit" disabled={isLoading}>
+        <Button 
+          type="submit" 
+          disabled={isLoading}
+          className="bg-purple-600 hover:bg-purple-700 focus:ring-purple-500"
+        >
           {isLoading ? <Spinner size="sm" /> : 'Add'}
         </Button>
       </form>
       {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
 
-      <div className="flex-1 space-y-2 overflow-y-auto">
-        {queue.map((video) => {
+      <div className="flex-1 space-y-2 overflow-y-auto pr-2">
+        {/* ✨ ANIMATION IMPLEMENTATION: Map over the transitions instead of the raw queue */}
+        {transitions((style, video) => {
           const hasVoted = user ? video.votes.includes(user.userId) : false;
           return (
-            <div key={video.id} className="flex items-center gap-4 rounded-md bg-gray-700 p-2">
-              <div className="flex-1">
+            <animated.div style={style} key={video.id} className="flex items-center gap-4 rounded-md bg-purple-900/50 p-2">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate" title={video.title}>{video.title}</p>
               </div>
               <button
                 onClick={() => handleVote(video.id)}
                 className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs transition-colors ${
                   hasVoted
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
                 <FaThumbsUp />
                 <span>{video.votes.length}</span>
               </button>
-            </div>
+            </animated.div>
           );
         })}
-        {queue.length === 0 && <p className="text-sm text-gray-400">The queue is empty.</p>}
+        {queue.length === 0 && <p className="text-sm text-gray-400 text-center mt-4">The queue is empty.</p>}
       </div>
     </div>
   );
 };
+
