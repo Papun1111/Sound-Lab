@@ -4,7 +4,7 @@
   "description": "Real-time collaborative YouTube streaming platform.",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "npm run build && npm run start",
     "start": "node dist/server.js",
     "build": "tsc",
     "migrate:dev": "npx prisma migrate dev",

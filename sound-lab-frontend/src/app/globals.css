@@ -30,3 +30,23 @@ body {
   font-weight: 400;
   font-style: italic;
 }
+
+
+.bg-pan-animated {
+  background-size: 150% 150%; /* Zoom in slightly to make the pan noticeable */
+  animation: subtle-pan 40s ease-in-out infinite;
+}
+
+/* For the glowing pulse effect on primary buttons */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(192, 132, 252, 0.4); /* purple-400 */
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(192, 132, 252, 0.8);
+  }
+}
+
+.button-pulse {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
