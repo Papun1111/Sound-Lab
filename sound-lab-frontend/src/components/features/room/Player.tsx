@@ -19,7 +19,7 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
 
   const playerRef = useRef<YouTubePlayer | null>(null);
   const isServerUpdate = useRef(false);
-
+    console.log(`socker Id:${socket?.id} and room Id :${roomId}`);
   useEffect(() => {
     const syncPlayer = async () => {
       const player = playerRef.current;
@@ -37,14 +37,10 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
 
         const serverState = currentlyPlaying;
         
-        // ✨ THE FIX: Only attempt to seek if the player is in a valid state.
-        // Player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering)
-        // We check if the state is greater than 0 (i.e., playing, paused, or buffering).
         if (playerState > 0 && Math.abs(playerCurrentTime - serverState.seekTime) > 1.5) {
           player.seekTo(serverState.seekTime, true);
         }
 
-        // Sync play/pause state
         if (serverState.isPlaying && playerState !== 1) {
           player.playVideo();
         } else if (!serverState.isPlaying && playerState === 1) {
@@ -119,6 +115,9 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     <animated.div style={playerAnimation} className="w-full">
       <div className="relative aspect-video overflow-hidden rounded-lg shadow-2xl">
         <YouTube
+          // ✨ THE FIX: Switched to backticks (`) for a proper template literal.
+          // This now creates a truly unique ID for every player in every room.
+          id={`Youtubeer-${roomId}-${socket?.id}`}
           key={currentlyPlaying.video.id}
           videoId={currentlyPlaying.video.youtubeId}
           opts={opts}
