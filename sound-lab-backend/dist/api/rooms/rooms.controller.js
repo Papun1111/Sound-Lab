@@ -22,7 +22,7 @@ export const getRoomByIdHandler = async (req, res) => {
     try {
         const { roomId } = req.params;
         if (!roomId) {
-            throw new AppError('Room ID is required.', 400);
+            throw new AppError('Room ID is required in the URL.', 400);
         }
         const room = await getRoomById(roomId);
         res.status(200).json({ status: 'success', data: room });
@@ -34,12 +34,13 @@ export const getRoomByIdHandler = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+// 👇 THIS ENTIRE FUNCTION IS THE FIX
 export const addVideoToQueueHandler = async (req, res) => {
     try {
         const { roomId } = req.params;
         const { youtubeUrl } = req.body;
         const userId = req.user?.userId;
-        const io = req.app.get('io');
+        const io = req.app.get('io'); // Get the io instance from the app
         if (!roomId) {
             throw new AppError('Room ID is required in the URL.', 400);
         }
@@ -51,7 +52,7 @@ export const addVideoToQueueHandler = async (req, res) => {
         }
         // 1. Add video to the database
         const newVideo = await addVideoToQueue(roomId, youtubeUrl, userId);
-        // 2. Update the live in-memory state
+        // 2. Add the newly created video to our in-memory roomManager
         roomManager.addVideo(roomId, {
             id: newVideo.id,
             youtubeId: newVideo.youtubeId,
@@ -59,23 +60,21 @@ export const addVideoToQueueHandler = async (req, res) => {
             duration: newVideo.duration,
             addedBy: newVideo.addedById,
         });
-        // ✨ FIX: Check the live state *after* adding the video
-        // This is a more reliable way to see if playback should start.
-        const currentRoomState = roomManager.getRoomState(roomId);
-        if (currentRoomState && !currentRoomState.currentlyPlaying && currentRoomState.queue.length === 1) {
+        // 3. Check if this is the first video and start playback
+        const room = roomManager.getRoomState(roomId);
+        if (room && !room.currentlyPlaying && room.queue.length === 1) {
             roomManager.startNextVideo(roomId);
         }
-        // 3. Get the final, fully updated state and broadcast it
-        const finalRoomState = roomManager.getRoomState(roomId);
-        io.to(roomId).emit('room_state_update', finalRoomState);
-        // 4. Send the API response
+        // 4. Get the final updated state and broadcast it to everyone in the room
+        const updatedState = roomManager.getRoomState(roomId);
+        io.to(roomId).emit('room_state_update', updatedState);
+        // 5. Send a success response for the initial API call
         res.status(201).json({ status: 'success', data: newVideo });
     }
     catch (error) {
         if (error instanceof AppError) {
             return res.status(error.statusCode).json({ message: error.message });
         }
-        console.error('Error in addVideoToQueueHandler:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };

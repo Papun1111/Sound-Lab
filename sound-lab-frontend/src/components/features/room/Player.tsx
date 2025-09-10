@@ -20,46 +20,44 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
   const playerRef = useRef<YouTubePlayer | null>(null);
   const isServerUpdate = useRef(false);
 
-  // This is the single source of truth for commanding the player based on state changes.
-  const syncPlayerState = async () => {
-    const player = playerRef.current;
-    const serverState = useRoomStore.getState().currentlyPlaying; // Always get the latest state
-
-    if (!player || !serverState || !serverState.video) {
-      return;
-    }
-
-    // Flag that the following actions are from the server to prevent feedback loops
-    isServerUpdate.current = true;
-
-    try {
-      const [playerState, playerCurrentTime] = await Promise.all([
-        player.getPlayerState(),
-        player.getCurrentTime(),
-      ]);
-
-      // Sync play/pause state
-      if (serverState.isPlaying && playerState !== 1) { // 1 = playing
-        player.playVideo();
-      } else if (!serverState.isPlaying && playerState === 1) {
-        player.pauseVideo();
-      }
-
-      // Sync seek time if there's a significant difference
-      if (Math.abs(playerCurrentTime - serverState.seekTime) > 2) {
-        player.seekTo(serverState.seekTime, true);
-      }
-    } catch (error) {
-        console.error("Error syncing player state:", error);
-    }
-
-    // Allow user actions again after a short delay
-    setTimeout(() => { isServerUpdate.current = false; }, 500);
-  };
-
-  // Run the sync logic whenever the server state changes
   useEffect(() => {
-    syncPlayerState();
+    const syncPlayer = async () => {
+      const player = playerRef.current;
+      if (!player || !currentlyPlaying || !currentlyPlaying.video) {
+        return;
+      }
+
+      isServerUpdate.current = true;
+
+      try {
+        const [playerState, playerCurrentTime] = await Promise.all([
+          player.getPlayerState(),
+          player.getCurrentTime(),
+        ]);
+
+        const serverState = currentlyPlaying;
+        
+        // ✨ THE FIX: Only attempt to seek if the player is in a valid state.
+        // Player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering)
+        // We check if the state is greater than 0 (i.e., playing, paused, or buffering).
+        if (playerState > 0 && Math.abs(playerCurrentTime - serverState.seekTime) > 1.5) {
+          player.seekTo(serverState.seekTime, true);
+        }
+
+        // Sync play/pause state
+        if (serverState.isPlaying && playerState !== 1) {
+          player.playVideo();
+        } else if (!serverState.isPlaying && playerState === 1) {
+          player.pauseVideo();
+        }
+      } catch (error) {
+        console.error("Error syncing player state:", error);
+      }
+      
+      setTimeout(() => { isServerUpdate.current = false; }, 500);
+    };
+
+    syncPlayer();
   }, [currentlyPlaying]);
 
   const handleNextVideo = () => {
@@ -82,11 +80,12 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     }
   };
 
-  // ✨ FIX: The onReady handler's only job is to store the player reference
-  // and then immediately trigger a sync. This is the most reliable way to handle the initial load.
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     playerRef.current = event.target;
-    syncPlayerState(); // Sync immediately once the player is ready
+    const latestState = useRoomStore.getState();
+    if (latestState.currentlyPlaying?.isPlaying) {
+      event.target.playVideo();
+    }
   };
   
   const playerAnimation = useSpring({
