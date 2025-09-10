@@ -45,7 +45,7 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     playerVars: {
       autoplay: 1,
       modestbranding: 1,
-      color:"red",
+      color: 'red',
       controls: 1,
       enablejsapi: 1,
     },
