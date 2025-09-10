@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import YouTube, { YouTubePlayer, YouTubeProps } from 'react-youtube';
 import { useRoomStore } from '@/store/useRoomStore';
 import { Socket } from 'socket.io-client';
@@ -16,10 +16,18 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
   const currentlyPlaying = useRoomStore((state) => state.currentlyPlaying);
   const params = useParams();
   const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
+  const [origin, setOrigin] = useState('');
 
   const playerRef = useRef<YouTubePlayer | null>(null);
   const isServerUpdate = useRef(false);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
+  // This effect is the core of synchronization and remains the same.
   useEffect(() => {
     const syncPlayer = async () => {
       const player = playerRef.current;
@@ -34,24 +42,19 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
           player.getPlayerState(),
           player.getCurrentTime(),
         ]);
-
-        const serverState = currentlyPlaying;
         
-        // ✨ THE FIX: Only attempt to seek if the player is in a valid state.
-        // Player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering)
-        // We check if the state is greater than 0 (i.e., playing, paused, or buffering).
+        const serverState = currentlyPlaying;
         if (playerState > 0 && Math.abs(playerCurrentTime - serverState.seekTime) > 1.5) {
           player.seekTo(serverState.seekTime, true);
         }
 
-        // Sync play/pause state
-        if (serverState.isPlaying && playerState !== 1) {
+        if (serverState.isPlaying && playerState !== 1) { // 1 = playing
           player.playVideo();
         } else if (!serverState.isPlaying && playerState === 1) {
           player.pauseVideo();
         }
       } catch (error) {
-        console.error("Error syncing player state:", error);
+          console.error("Error syncing player state:", error);
       }
       
       setTimeout(() => { isServerUpdate.current = false; }, 500);
@@ -82,12 +85,8 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
 
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     playerRef.current = event.target;
-    const latestState = useRoomStore.getState();
-    if (latestState.currentlyPlaying?.isPlaying) {
-      event.target.playVideo();
-    }
   };
-  
+
   const playerAnimation = useSpring({
     from: { opacity: 0, transform: 'scale(0.95)' },
     to: { opacity: 1, transform: 'scale(1)' },
@@ -103,6 +102,7 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     );
   }
 
+  // Configuration for the `react-youtube` component
   const opts: YouTubeProps['opts'] = {
     height: '100%',
     width: '100%',
@@ -112,6 +112,7 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
       color: 'red',
       controls: 1,
       enablejsapi: 1,
+      origin: origin,
     },
   };
 
@@ -120,13 +121,14 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
       <div className="relative aspect-video overflow-hidden rounded-lg shadow-2xl">
         <YouTube
           key={currentlyPlaying.video.id}
-          videoId={currentlyPlaying.video.youtubeId}
-          opts={opts}
+          videoId={currentlyPlaying.video.youtubeId} // `react-youtube` uses the `videoId` prop
+          opts={opts} // Pass the configuration object
           onReady={onPlayerReady}
           onPlay={handlePlay}
           onPause={handlePause}
-          onEnd={handleNextVideo}
+          onEnd={handleNextVideo} // `onEnd` is the correct event for this library
           className="h-full w-full"
+  
         />
       </div>
       <div className="mt-4 flex items-center justify-between gap-4">
