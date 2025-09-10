@@ -1,194 +1,78 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/useAuthStore';
-import { createRoom } from '@/services/api';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Spinner } from '@/components/ui/Spinner';
-import { AxiosError } from 'axios';
-import Link from 'next/link';
-import { motion, Variants } from 'framer-motion'; // ✨ FIX: Import the Variants type
+import React from 'react';
+import ReactPlayer from 'react-player';
+import { useRoomStore } from '@/store/useRoomStore';
+import { Socket } from 'socket.io-client';
+import { FaStepForward } from 'react-icons/fa';
+import { useParams } from 'next/navigation';
+import { useSpring, animated } from '@react-spring/web';
 
-// Animation variants for Framer Motion with explicit typing
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2, // Stagger the animation of child elements
-    },
-  },
-};
+interface PlayerProps {
+  socket: Socket | null;
+}
 
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut",
-    },
-  },
-};
+export const Player: React.FC<PlayerProps> = ({ socket }) => {
+  const currentlyPlaying = useRoomStore((state) => state.currentlyPlaying);
+  const params = useParams();
+  const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
 
-const headerVariants: Variants = {
-    hidden: { opacity: 0, y: -50 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
-
-export default function HomePage() {
-  const [roomName, setRoomName] = useState('');
-  const [joinRoomId, setJoinRoomId] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const router = useRouter();
-  const { authStatus, token, initializeAuth, logout } = useAuthStore();
-
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
-
-  const handleCreateRoom = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (authStatus !== 'authenticated' || !token) {
-      setError('You must be logged in to create a room.');
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await createRoom(roomName, token);
-      const newRoomId = response.data.id;
-      router.push(`/room/${newRoomId}`);
-    } catch (err) {
-      let errorMessage = 'Failed to create room. Please try again.';
-      if (err instanceof AxiosError && err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      }
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
+  const handleNextVideo = () => {
+    if (socket && roomId) {
+      socket.emit('request_next_video', roomId);
     }
   };
 
-  const handleJoinRoom = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (joinRoomId.trim()) {
-      router.push(`/room/${joinRoomId.trim()}`);
-    }
-  };
+  const playerAnimation = useSpring({
+    from: { opacity: 0, transform: 'scale(0.95)' },
+    to: { opacity: 1, transform: 'scale(1)' },
+    key: currentlyPlaying?.video.id,
+    config: { tension: 280, friction: 30 },
+  });
 
-  const renderAuthLinks = () => (
-    <div className="flex items-center gap-4">
-      <Link href="/login">
-        <Button variant="secondary" className="transition-transform hover:scale-105">Log In</Button>
-      </Link>
-      <Link href="/signup">
-        <Button variant="ghost" className="transition-transform hover:scale-105">Sign Up</Button>
-      </Link>
-    </div>
-  );
+  if (!currentlyPlaying) {
+    return (
+      <div className="flex aspect-video w-full items-center justify-center rounded-lg bg-gray-900 border-2 border-dashed border-purple-800 text-purple-400">
+        <p>Nothing is playing. Add a video to the queue to get started!</p>
+      </div>
+    );
+  }
 
-  const renderUserActions = () => (
-    <div className="flex items-center gap-4">
-      <Button variant="danger" onClick={logout} className="transition-transform hover:scale-105">
-        Log Out
-      </Button>
-    </div>
-  );
+  const videoUrl = `https://www.youtube.com/watch?v=${currentlyPlaying.video.youtubeId}`;
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-900 text-white bg-cover bg-center bg-no-repeat bg-pan-animated "
-     style={{ backgroundImage: "url('/bg-img.png')" }}>
-      <div className="flex min-h-screen flex-col bg-black/75 backdrop-blur-sm">
-        <motion.header
-          variants={headerVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex items-center justify-between p-4 border-b border-purple-800 shadow-md"
-        >
-          <h1 className="text-2xl font-bold text-purple-400">Sound Lab</h1>
-          {authStatus === 'authenticated' ? renderUserActions() : renderAuthLinks()}
-        </motion.header>
-
-        <main className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="w-full"
-          >
-            <motion.h2 variants={itemVariants} className="text-5xl font-extrabold tracking-tight">Watch Together,</motion.h2>
-            <motion.h2 variants={itemVariants} className="text-5xl font-extrabold tracking-tight text-purple-400">Decide Together.</motion.h2>
-            <motion.p variants={itemVariants} className="mt-4 max-w-xl mx-auto text-lg text-gray-400">
-              Create a room, invite your friends, and vote on what to watch next. Your synchronized YouTube experience starts here.
-            </motion.p>
-          </motion.div>
-
-          {authStatus === 'authenticated' && (
-            <motion.div variants={itemVariants} initial="hidden" animate="visible" className="mt-10 mx-auto w-full max-w-md">
-              <form
-                onSubmit={handleCreateRoom}
-                className="space-y-4"
-              >
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <Input
-                    type="text"
-                    value={roomName}
-                    onChange={(e) => setRoomName(e.target.value)}
-                    placeholder="Enter a name for your new room"
-                    className="bg-gray-800 border-gray-600 text-center focus:border-purple-500 focus:ring-purple-500 w-full flex-grow"
-                    required
-                    disabled={isLoading}
-                  />
-                  <Button type="submit" disabled={isLoading} className="transition-transform hover:scale-105 w-full sm:w-auto flex-shrink-0">
-                    {isLoading ? <Spinner size="sm" /> : 'Create Room'}
-                  </Button>
-                </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-              </form>
-              
-              <div className="my-6 flex items-center">
-                <div className="flex-grow border-t border-gray-700"></div>
-                <span className="flex-shrink mx-4 text-gray-500">OR</span>
-                <div className="flex-grow border-t border-gray-700"></div>
-              </div>
-
-              <form
-                onSubmit={handleJoinRoom}
-                className="space-y-4"
-              >
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <Input
-                    type="text"
-                    value={joinRoomId}
-                    onChange={(e) => setJoinRoomId(e.target.value)}
-                    placeholder="Paste an existing Room ID"
-                    className="bg-gray-800 border-gray-600 text-center focus:border-purple-500 focus:ring-purple-500 w-full flex-grow"
-                    required
-                  />
-                  <Button type="submit" variant="secondary" className="transition-transform hover:scale-105 w-full sm:w-auto flex-shrink-0">
-                    Join Room
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-
-          {authStatus === 'unauthenticated' && (
-            <motion.div variants={itemVariants} initial="hidden" animate="visible" className="mt-10">
-              <Link href="/login">
-                <Button variant="primary" className="transition-transform hover:scale-105">Get Started</Button>
-              </Link>
-            </motion.div>
-          )}
-        </main>
+    <animated.div style={playerAnimation} className="w-full">
+      <div className="relative aspect-video overflow-hidden rounded-lg shadow-2xl">
+        <ReactPlayer
+          key={currentlyPlaying.video.id}
+          src={videoUrl}
+          playing={currentlyPlaying.isPlaying}
+          controls={true}
+          muted={true}
+          width="100%"
+          height="100%"
+          onEnded={handleNextVideo}
+          config={{
+            youtube: {
+                color: 'red',
+                enablejsapi: 1,
+            },
+          }}
+        />
       </div>
-    </div>
+      <div className="mt-4 flex items-center justify-between gap-4">
+        <h2 className="text-xl font-bold text-white flex-1 truncate" title={currentlyPlaying.video.title}>
+          {currentlyPlaying.video.title}
+        </h2>
+        <button
+          onClick={handleNextVideo}
+          className="flex-shrink-0 rounded-full bg-purple-600 p-3 text-white transition-colors hover:bg-purple-500 disabled:opacity-50"
+          title="Next Video"
+        >
+          <FaStepForward className="h-5 w-5" />
+        </button>
+      </div>
+    </animated.div>
   );
-}
+};
 
