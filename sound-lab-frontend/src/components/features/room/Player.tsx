@@ -16,6 +16,10 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
   const currentlyPlaying = useRoomStore((state) => state.currentlyPlaying);
   const params = useParams();
   const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
+
+  // ✨ FIX 1: Create a guaranteed unique ID for this specific player instance.
+  // This helps YouTube distinguish between players, even for users in the same room.
+  const [playerInstanceId] = useState(() => Math.random().toString(36).substring(7));
   const [origin, setOrigin] = useState('');
 
   const playerRef = useRef<YouTubePlayer | null>(null);
@@ -27,16 +31,12 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     }
   }, []);
 
-  // This effect is the core of synchronization and remains the same.
   useEffect(() => {
     const syncPlayer = async () => {
       const player = playerRef.current;
-      if (!player || !currentlyPlaying || !currentlyPlaying.video) {
-        return;
-      }
+      if (!player || !currentlyPlaying || !currentlyPlaying.video) return;
 
       isServerUpdate.current = true;
-
       try {
         const [playerState, playerCurrentTime] = await Promise.all([
           player.getPlayerState(),
@@ -48,7 +48,7 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
           player.seekTo(serverState.seekTime, true);
         }
 
-        if (serverState.isPlaying && playerState !== 1) { // 1 = playing
+        if (serverState.isPlaying && playerState !== 1) {
           player.playVideo();
         } else if (!serverState.isPlaying && playerState === 1) {
           player.pauseVideo();
@@ -56,17 +56,13 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
       } catch (error) {
           console.error("Error syncing player state:", error);
       }
-      
       setTimeout(() => { isServerUpdate.current = false; }, 500);
     };
-
     syncPlayer();
   }, [currentlyPlaying]);
 
   const handleNextVideo = () => {
-    if (socket && roomId) {
-      socket.emit('request_next_video', roomId);
-    }
+    if (socket && roomId) socket.emit('request_next_video', roomId);
   };
 
   const handlePlay = () => {
@@ -85,8 +81,12 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
 
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     playerRef.current = event.target;
+    const latestState = useRoomStore.getState();
+    if (latestState.currentlyPlaying?.isPlaying) {
+      event.target.playVideo();
+    }
   };
-
+  
   const playerAnimation = useSpring({
     from: { opacity: 0, transform: 'scale(0.95)' },
     to: { opacity: 1, transform: 'scale(1)' },
@@ -102,7 +102,6 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     );
   }
 
-  // Configuration for the `react-youtube` component
   const opts: YouTubeProps['opts'] = {
     height: '100%',
     width: '100%',
@@ -112,6 +111,7 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
       color: 'red',
       controls: 1,
       enablejsapi: 1,
+      // ✨ FIX 2: The `origin` parameter is critical for security, as confirmed by the documentation.
       origin: origin,
     },
   };
@@ -120,15 +120,16 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     <animated.div style={playerAnimation} className="w-full">
       <div className="relative aspect-video overflow-hidden rounded-lg shadow-2xl">
         <YouTube
+          // ✨ FIX 3: Pass the unique ID to the player.
+          id={playerInstanceId}
           key={currentlyPlaying.video.id}
-          videoId={currentlyPlaying.video.youtubeId} // `react-youtube` uses the `videoId` prop
-          opts={opts} // Pass the configuration object
+          videoId={currentlyPlaying.video.youtubeId}
+          opts={opts}
           onReady={onPlayerReady}
           onPlay={handlePlay}
           onPause={handlePause}
-          onEnd={handleNextVideo} // `onEnd` is the correct event for this library
+          onEnd={handleNextVideo}
           className="h-full w-full"
-  
         />
       </div>
       <div className="mt-4 flex items-center justify-between gap-4">
