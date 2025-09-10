@@ -55,21 +55,27 @@ export const initializeSocketIO = (server: http.Server) => {
     });
 
     // --- PLAYBACK LOGIC ---
-
-    // ✨ THIS IS THE NEWLY ADDED LOGIC ✨
-    // Listens for a message from a client player when its video ends.
     socket.on('request_next_video', (roomId: string) => {
       if (!socket.user) return;
-
-      // Tell the room manager to advance the queue
       roomManager.startNextVideo(roomId);
-
-      // Get the new state with the new `currentlyPlaying` video
       const updatedState = roomManager.getRoomState(roomId);
-
-      // Broadcast the new state to everyone in the room
       io.to(roomId).emit('room_state_update', updatedState);
     });
+    
+    // ✨ NEW LISTENER FOR REAL-TIME SYNC ✨
+    // This handles play, pause, and seek events from clients.
+    socket.on('playback_change', (roomId: string, newState: any) => {
+        if (!socket.user) return;
+
+        // 1. Update the playback state on the server using the roomManager.
+        roomManager.updatePlaybackState(roomId, newState);
+
+        // 2. Broadcast this change to all OTHER clients in the room.
+        // Using `socket.to(roomId)` is crucial to prevent sending the event
+        // back to the user who triggered it, which would cause an echo effect.
+        socket.to(roomId).emit('room_state_update', { currentlyPlaying: newState });
+    });
+
 
     // --- VOTING LOGIC ---
     socket.on('vote_video', ({ roomId, videoId }: { roomId: string; videoId: string }) => {
@@ -82,3 +88,4 @@ export const initializeSocketIO = (server: http.Server) => {
 
   return io;
 };
+

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-
+// --- STATE SHAPES (mirroring the backend) ---
 
 interface Video {
   id: string;
@@ -8,7 +8,7 @@ interface Video {
   title: string;
   duration: number;
   addedBy: string;
-  votes: string[]; 
+  votes: string[];
 }
 
 interface PlaybackState {
@@ -49,32 +49,32 @@ const initialState: RoomState = {
 export const useRoomStore = create<RoomState & RoomActions>((set) => ({
   ...initialState,
 
-  /**
-   * Updates the room state by merging the new partial state
-   * with the existing state.
-   */
   setRoomState: (state) => {
     if (state) {
-      set((prevState) => ({
-        ...prevState,
-        ...state,
-      }));
+      // ✨ THE DEFINITIVE FIX:
+      // This logic checks if the incoming update is a partial `currentlyPlaying`
+      // state. If so, it correctly merges it with the existing `currentlyPlaying`
+      // object instead of replacing it. This prevents the video data from being lost.
+      set((prevState) => {
+        const newCurrentlyPlaying = state.currentlyPlaying
+          ? { ...prevState.currentlyPlaying, ...state.currentlyPlaying }
+          : state.currentlyPlaying === null ? null : prevState.currentlyPlaying;
+
+        return {
+          ...prevState,
+          ...state,
+          currentlyPlaying: newCurrentlyPlaying as PlaybackState | null,
+        };
+      });
     } else {
-      // If null is passed, reset to the initial state.
       set(initialState);
     }
   },
 
-  /**
-   * Updates the WebSocket connection status.
-   */
   setConnectionStatus: (isConnected) => {
     set({ isConnected });
   },
 
-  /**
-   * Resets the room state to its initial values when a user leaves.
-   */
   clearRoomState: () => {
     set({ ...initialState, isConnected: false });
   },

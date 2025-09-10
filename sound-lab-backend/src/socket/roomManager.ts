@@ -112,4 +112,15 @@ export const roomManager = {
       seekTime: 0,
     };
   },
+  
+  // ✨ NEW FUNCTION TO HANDLE REAL-TIME SYNC ✨
+  // This function updates the playback state (play, pause, seek) for a room.
+  updatePlaybackState(roomId: string, newState: Partial<PlaybackState>) {
+    const room = rooms.get(roomId);
+    if (room && room.currentlyPlaying) {
+      // Merge the new state properties (like `isPlaying` or `seekTime`)
+      // into the existing currentlyPlaying object.
+      room.currentlyPlaying = { ...room.currentlyPlaying, ...newState };
+    }
+  },
 };
