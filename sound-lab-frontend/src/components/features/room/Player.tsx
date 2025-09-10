@@ -107,10 +107,9 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     width: '100%',
     playerVars: {
       autoplay: 1,
-      modestbranding: 1,
       color: 'red',
       controls: 1,
-      enablejsapi: 1,
+      enablejsapi:1,
       origin: origin,
     },
   };
