@@ -111,7 +111,6 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
       color: 'red',
       controls: 1,
       enablejsapi: 1,
-      // ✨ FIX 2: The `origin` parameter is critical for security, as confirmed by the documentation.
       origin: origin,
     },
   };
@@ -147,4 +146,3 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
     </animated.div>
   );
 };
-
