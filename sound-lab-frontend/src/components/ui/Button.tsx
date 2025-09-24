@@ -30,7 +30,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       primary: 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500',
       secondary: 'bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500',
       danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-      ghost: 'bg-transparent text-purple-400 hover:bg-purple-500/20 focus:ring-purple-500',
+      ghost: 'bg-white text-grey-800 hover:bg-purple-500/20 focus:ring-purple-500',
     };
 
     const widthStyle = fullWidth ? 'w-full' : '';

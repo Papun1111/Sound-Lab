@@ -11,7 +11,24 @@ import { Spinner } from '@/components/ui/Spinner';
 import { FaThumbsUp } from 'react-icons/fa';
 import { AxiosError } from 'axios';
 import { Socket } from 'socket.io-client';
-import { useTransition, animated } from '@react-spring/web'; // Import for animation
+import { motion, AnimatePresence, Variants } from 'framer-motion'; // Import for animation
+
+// --- Animation Variants for Framer Motion ---
+const listItemVariants: Variants = {
+  hidden: { opacity: 0, y: 20, scale: 0.98 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: { duration: 0.4, ease: 'easeOut' }
+  },
+  exit: { 
+    opacity: 0, 
+    x: -30, 
+    scale: 0.95,
+    transition: { duration: 0.3, ease: 'easeIn' }
+  },
+};
 
 interface QueueProps {
   socket: Socket | null;
@@ -34,10 +51,8 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
       setError("Cannot add video: Room ID is missing or you are not logged in.");
       return;
     }
-
     setIsLoading(true);
     setError(null);
-
     try {
       await addVideoToRoom(roomId, youtubeUrl, token);
       setYoutubeUrl('');
@@ -58,63 +73,64 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
     }
   };
 
-  // ✨ ANIMATION LOGIC using react-spring's useTransition hook ✨
-  const transitions = useTransition(queue, {
-    from: { opacity: 0, transform: 'translateY(20px)' },
-    enter: { opacity: 1, transform: 'translateY(0px)' },
-    leave: { opacity: 0, transform: 'translateY(-20px)' },
-    keys: item => item.id, // Use video ID as the key for stable animations
-    trail: 50, // Stagger the animations slightly
-  });
-
   return (
-    // ✨ THEME UPDATE: Changed colors to a purple theme ✨
-    <div className="flex h-full flex-col rounded-lg bg-gray-900 border border-purple-800 p-4 shadow-lg">
-      <h3 className="mb-4 text-lg font-bold text-purple-300">Up Next</h3>
+    <div className="flex h-full flex-col rounded-lg bg-gray-900/50 border border-white/10 p-4 shadow-lg backdrop-blur-xl">
+      <h3 className="mb-4 text-lg font-bold text-cyan-300">Up Next</h3>
       
-      <form onSubmit={handleAddVideo} className="mb-4 flex gap-2">
+      <form onSubmit={handleAddVideo} className="mb-4 flex gap-3">
         <Input
           type="text"
           value={youtubeUrl}
           onChange={(e) => setYoutubeUrl(e.target.value)}
-          placeholder="Paste YouTube URL"
-          className="bg-gray-800 text-white border-purple-700 focus:ring-purple-500"
+          placeholder="Paste YouTube URL..."
+          className="bg-white/5 border-white/20 text-white placeholder:text-white/40 rounded-full py-2 px-4 backdrop-blur-sm focus:border-cyan-400 focus:ring-cyan-400/30"
           disabled={isLoading}
         />
         <Button 
           type="submit" 
           disabled={isLoading}
-          className="bg-purple-600 hover:bg-purple-700 focus:ring-purple-500"
+          className="bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-400 text-gray-900 font-bold rounded-full px-5"
         >
           {isLoading ? <Spinner size="sm" /> : 'Add'}
         </Button>
       </form>
-      {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+      {error && <p className="text-sm text-red-400 mb-2 text-center">{error}</p>}
 
       <div className="flex-1 space-y-2 overflow-y-auto pr-2">
-        {/* ✨ ANIMATION IMPLEMENTATION: Map over the transitions instead of the raw queue */}
-        {transitions((style, video) => {
-          const hasVoted = user ? video.votes.includes(user.userId) : false;
-          return (
-            <animated.div style={style} key={video.id} className="flex items-center gap-4 rounded-md bg-purple-900/50 p-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate" title={video.title}>{video.title}</p>
-              </div>
-              <button
-                onClick={() => handleVote(video.id)}
-                className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs transition-colors ${
-                  hasVoted
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
+        <AnimatePresence>
+          {queue.map((video) => {
+            const hasVoted = user ? video.votes.includes(user.userId) : false;
+            return (
+              <motion.div
+                key={video.id}
+                variants={listItemVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                layout
+                className="flex items-center gap-4 rounded-lg bg-white/5 p-2 backdrop-blur-sm"
               >
-                <FaThumbsUp />
-                <span>{video.votes.length}</span>
-              </button>
-            </animated.div>
-          );
-        })}
-        {queue.length === 0 && <p className="text-sm text-gray-400 text-center mt-4">The queue is empty.</p>}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate" title={video.title}>{video.title}</p>
+                </div>
+                <button
+                  onClick={() => handleVote(video.id)}
+                  className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs transition-colors ${
+                    hasVoted
+                      ? 'bg-cyan-400 text-black'
+                      : 'bg-white/10 text-white/70 hover:bg-white/20'
+                  }`}
+                >
+                  <FaThumbsUp />
+                  <span>{video.votes.length}</span>
+                </button>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+        {queue.length === 0 && (
+            <div className="text-sm text-white/50 text-center pt-8">The queue is empty.</div>
+        )}
       </div>
     </div>
   );
