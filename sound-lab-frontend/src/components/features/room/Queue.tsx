@@ -11,20 +11,20 @@ import { Spinner } from '@/components/ui/Spinner';
 import { FaThumbsUp } from 'react-icons/fa';
 import { AxiosError } from 'axios';
 import { Socket } from 'socket.io-client';
-import { motion, AnimatePresence, Variants } from 'framer-motion'; // Import for animation
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
-// --- Animation Variants for Framer Motion ---
+// --- Animation Variants (Logic Unchanged) ---
 const listItemVariants: Variants = {
   hidden: { opacity: 0, y: 20, scale: 0.98 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
+  visible: {
+    opacity: 1,
+    y: 0,
     scale: 1,
     transition: { duration: 0.4, ease: 'easeOut' }
   },
-  exit: { 
-    opacity: 0, 
-    x: -30, 
+  exit: {
+    opacity: 0,
+    x: -30,
     scale: 0.95,
     transition: { duration: 0.3, ease: 'easeIn' }
   },
@@ -37,10 +37,10 @@ interface QueueProps {
 export const Queue: React.FC<QueueProps> = ({ socket }) => {
   const params = useParams();
   const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
-  
+
   const queue = useRoomStore((state) => state.queue);
   const { token, user } = useAuthStore();
-  
+
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,27 +74,33 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
   };
 
   return (
-    <div className="flex h-full flex-col rounded-lg bg-gray-900/50 border border-white/10 p-4 shadow-lg backdrop-blur-xl">
-      <h3 className="mb-4 text-lg font-bold text-cyan-300">Up Next</h3>
-      
+    // Main container with the new gradient background
+    <div className="flex h-full flex-col rounded-lg bg-gradient-to-tr from-orange-200 via-transparent to-red-400 border border-rose-500/30 p-4 shadow-lg">
+      {/* Header with gradient text effect */}
+      <h3 className="mb-4 text-lg font-bold bg-gradient-to-r from-lime-300 to-black text-transparent bg-clip-text">
+        Up Next
+      </h3>
+
       <form onSubmit={handleAddVideo} className="mb-4 flex gap-3">
+        {/* Input styled with new theme */}
         <Input
           type="text"
           value={youtubeUrl}
           onChange={(e) => setYoutubeUrl(e.target.value)}
           placeholder="Paste YouTube URL..."
-          className="bg-white/5 border-white/20 text-white placeholder:text-white/40 rounded-full py-2 px-4 backdrop-blur-sm focus:border-cyan-400 focus:ring-cyan-400/30"
+          className="bg-black/30 border-rose-500/40 text-lime-200 placeholder:text-lime-200/50 rounded-full py-2 px-4 focus:border-lime-400 focus:ring-lime-400/30"
           disabled={isLoading}
         />
-        <Button 
-          type="submit" 
+        {/* Button styled with new theme */}
+        <Button
+          type="submit"
           disabled={isLoading}
-          className="bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-400 text-gray-900 font-bold rounded-full px-5"
+          className="bg-lime-400 hover:bg-lime-500 focus:ring-lime-300 text-black font-bold rounded-full px-5 transition-colors"
         >
           {isLoading ? <Spinner size="sm" /> : 'Add'}
         </Button>
       </form>
-      {error && <p className="text-sm text-red-400 mb-2 text-center">{error}</p>}
+      {error && <p className="text-sm text-rose-400 mb-2 text-center">{error}</p>}
 
       <div className="flex-1 space-y-2 overflow-y-auto pr-2">
         <AnimatePresence>
@@ -108,17 +114,21 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
                 animate="visible"
                 exit="exit"
                 layout
-                className="flex items-center gap-4 rounded-lg bg-white/5 p-2 backdrop-blur-sm"
+                className="flex items-center gap-4 rounded-lg bg-black/20 hover:bg-rose-900/20 transition-colors p-2"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate" title={video.title}>{video.title}</p>
+                  {/* Video title with new theme color */}
+                  <p className="text-sm font-medium text-lime-200/90 truncate" title={video.title}>
+                    {video.title}
+                  </p>
                 </div>
+                {/* Vote button with new theme colors */}
                 <button
                   onClick={() => handleVote(video.id)}
                   className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs transition-colors ${
                     hasVoted
-                      ? 'bg-cyan-400 text-black'
-                      : 'bg-white/10 text-white/70 hover:bg-white/20'
+                      ? 'bg-lime-400 text-black'
+                      : 'bg-rose-500/10 text-lime-200/70 hover:bg-rose-500/20'
                   }`}
                 >
                   <FaThumbsUp />
@@ -129,10 +139,12 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
           })}
         </AnimatePresence>
         {queue.length === 0 && (
-            <div className="text-sm text-white/50 text-center pt-8">The queue is empty.</div>
+          // Empty queue message with new theme color
+          <div className="text-sm text-lime-200/50 text-center pt-8">
+            The queue is empty.
+          </div>
         )}
       </div>
     </div>
   );
 };
-

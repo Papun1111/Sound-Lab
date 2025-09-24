@@ -153,13 +153,13 @@ export default function HomePage() {
   );
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-gray-900 via-red-900/20 to-orange-900/30 text-white">
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-r from-white via-red-700 to-gray-600 text-white">
       {/* Animated Flame Background Effects */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <motion.div
           variants={flameVariants}
           initial="hidden"
-          animate={["visible", "flicker"]}
+          animate={["visible"]}
           className="absolute top-[10%] left-[5%] w-72 h-72 bg-gradient-to-r from-red-500/15 to-orange-500/10 rounded-full blur-3xl"
           style={{ animationDelay: "0s" }}
         />
@@ -254,7 +254,7 @@ export default function HomePage() {
                   Perfectly Synced.
                 </span>
               </motion.h2>
-              <p className="mt-6 text-lg text-white/80 max-w-xl mx-auto">
+              <p className="mt-6 text-lg bg-gradient-to-r from-slate-900 to-green-300 bg-clip-text text-transparent  max-w-xl mx-auto">
                 Create collaborative playlists, vote on tracks, and sync your
                 music experience with friends in real-time.
               </p>

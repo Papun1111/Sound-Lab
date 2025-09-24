@@ -36,7 +36,7 @@ export const UserList = () => {
   });
 
   return (
-    <div className="h-full rounded-lg bg-gray-900 border border-purple-800 p-4 shadow-lg flex flex-col">
+    <div className="h-full rounded-lg bg-gradient-to-tr from-orange-200 via-transparent to-red-400 border border-purple-800 p-4 shadow-lg flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-purple-300">In Room ({users.length})</h3>
         {/* ✨ NEW FEATURE: Copy Room ID Button ✨ */}
