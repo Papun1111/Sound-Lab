@@ -62,16 +62,6 @@ const flameVariants: Variants = {
       ease: "easeOut",
     },
   },
-  flicker: {
-    opacity: [0.6, 1, 0.8, 1],
-    scale: [1, 1.05, 0.98, 1],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      repeatType: "reverse",
-      ease: "easeInOut",
-    },
-  },
 };
 
 export default function HomePage() {
@@ -166,21 +156,21 @@ export default function HomePage() {
         <motion.div
           variants={flameVariants}
           initial="hidden"
-          animate={["visible", "flicker"]}
+          animate={["visible"]}
           className="absolute bottom-[15%] right-[10%] w-96 h-96 bg-gradient-to-r from-yellow-500/12 to-red-500/15 rounded-full blur-3xl"
           style={{ animationDelay: "1.5s" }}
         />
         <motion.div
           variants={flameVariants}
           initial="hidden"
-          animate={["visible", "flicker"]}
+          animate={["visible"]}
           className="absolute top-[20%] right-[25%] w-60 h-60 bg-gradient-to-r from-orange-500/10 to-yellow-500/8 rounded-full blur-3xl"
           style={{ animationDelay: "3s" }}
         />
         <motion.div
           variants={flameVariants}
           initial="hidden"
-          animate={["visible", "flicker"]}
+          animate={["visible"]}
           className="absolute bottom-[30%] left-[20%] w-80 h-80 bg-gradient-to-r from-red-400/8 to-orange-400/12 rounded-full blur-3xl"
           style={{ animationDelay: "4.5s" }}
         />
