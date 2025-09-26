@@ -76,9 +76,9 @@ export const SignupForm = () => {
       rotate: [0, 3, -2, 1],
       transition: {
         duration: 5,
-        repeat: Infinity,
+        repeat: 1,
         repeatType: "reverse",
-        ease: "easeInOut",
+        ease: "easeIn",
       },
     },
   };
