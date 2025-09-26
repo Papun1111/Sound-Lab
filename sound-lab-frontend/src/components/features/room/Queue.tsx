@@ -8,24 +8,22 @@ import { addVideoToRoom } from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
-import { FaThumbsUp } from 'react-icons/fa';
+import { ThumbsUp } from 'lucide-react'; 
 import { AxiosError } from 'axios';
 import { Socket } from 'socket.io-client';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'motion/react';
 
-// --- Animation Variants (Logic Unchanged) ---
+
 const listItemVariants: Variants = {
-  hidden: { opacity: 0, y: 20, scale: 0.98 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
     transition: { duration: 0.4, ease: 'easeOut' }
   },
   exit: {
     opacity: 0,
     x: -30,
-    scale: 0.95,
     transition: { duration: 0.3, ease: 'easeIn' }
   },
 };
@@ -35,6 +33,7 @@ interface QueueProps {
 }
 
 export const Queue: React.FC<QueueProps> = ({ socket }) => {
+  // --- All original state and logic are preserved ---
   const params = useParams();
   const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
 
@@ -74,35 +73,35 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
   };
 
   return (
-    // Main container with the new gradient background
-    <div className="flex h-full flex-col rounded-lg bg-gradient-to-tr from-orange-200 via-transparent to-red-400 border border-rose-500/30 p-4 shadow-lg">
-      {/* Header with gradient text effect */}
-      <h3 className="mb-4 text-lg font-bold bg-gradient-to-r from-lime-300 to-black text-transparent bg-clip-text">
+    // Main container restyled with a clean, white background and a simple border.
+    <div className="flex h-full flex-col bg-white border border-neutral-200 p-4">
+      {/* Header restyled to be bold and clean. */}
+      <h3 className="mb-4 text-xl font-bold text-[#212121]">
         Up Next
       </h3>
 
-      <form onSubmit={handleAddVideo} className="mb-4 flex gap-3">
-        {/* Input styled with new theme */}
+      {/* Form elements now match the application-wide style. */}
+      <form onSubmit={handleAddVideo} className="mb-4 flex gap-2">
         <Input
           type="text"
           value={youtubeUrl}
           onChange={(e) => setYoutubeUrl(e.target.value)}
           placeholder="Paste YouTube URL..."
-          className="bg-black/30 border-rose-500/40 text-lime-200 placeholder:text-lime-200/50 rounded-full py-2 px-4 focus:border-lime-400 focus:ring-lime-400/30"
+          className="h-11 bg-transparent border-2 border-neutral-300 text-gray-900 rounded-none focus:border-[#212121] transition-colors w-full"
           disabled={isLoading}
         />
-        {/* Button styled with new theme */}
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-lime-400 hover:bg-lime-500 focus:ring-lime-300 text-black font-bold rounded-full px-5 transition-colors"
+          className="h-11 w-24 bg-[#212121] hover:bg-[#D63426] text-white rounded-none transition-colors"
         >
           {isLoading ? <Spinner size="sm" /> : 'Add'}
         </Button>
       </form>
-      {error && <p className="text-sm text-rose-400 mb-2 text-center">{error}</p>}
+      {error && <p className="text-sm text-red-600 mb-2 text-center">{error}</p>}
 
-      <div className="flex-1 space-y-2 overflow-y-auto pr-2">
+      {/* The scrollable list area. */}
+      <div className="flex-1 space-y-1 overflow-y-auto pr-2 -mr-2">
         <AnimatePresence>
           {queue.map((video) => {
             const hasVoted = user ? video.votes.includes(user.userId) : false;
@@ -114,24 +113,24 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
                 animate="visible"
                 exit="exit"
                 layout
-                className="flex items-center gap-4 rounded-lg bg-black/20 hover:bg-rose-900/20 transition-colors p-2"
+                className="flex items-center gap-4 rounded p-2 hover:bg-neutral-100 transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  {/* Video title with new theme color */}
-                  <p className="text-sm font-medium text-lime-200/90 truncate" title={video.title}>
+                  {/* Video title with updated text color. */}
+                  <p className="text-sm font-medium text-neutral-800 truncate" title={video.title}>
                     {video.title}
                   </p>
                 </div>
-                {/* Vote button with new theme colors */}
+                {/* Vote button restyled with the new color palette. */}
                 <button
                   onClick={() => handleVote(video.id)}
-                  className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs transition-colors ${
+                  className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
                     hasVoted
-                      ? 'bg-lime-400 text-black'
-                      : 'bg-rose-500/10 text-lime-200/70 hover:bg-rose-500/20'
+                      ? 'bg-[#D63426] text-white'
+                      : 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300'
                   }`}
                 >
-                  <FaThumbsUp />
+                  <ThumbsUp size={12} />
                   <span>{video.votes.length}</span>
                 </button>
               </motion.div>
@@ -139,9 +138,9 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
           })}
         </AnimatePresence>
         {queue.length === 0 && (
-          // Empty queue message with new theme color
-          <div className="text-sm text-lime-200/50 text-center pt-8">
-            The queue is empty.
+          // Empty queue message restyled for consistency.
+          <div className="text-sm text-neutral-500 text-center pt-8">
+            The queue is empty. Add a video to get started.
           </div>
         )}
       </div>

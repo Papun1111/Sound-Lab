@@ -4,32 +4,29 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-// Animation and Icons
-import { useTransition, animated } from "@react-spring/web";
-import { FaHome } from "react-icons/fa";
+// Animation and Icons (Updated to framer-motion and lucide-react)
+import { motion, AnimatePresence } from "framer-motion";
+import { Home } from "lucide-react";
 
-// Hooks and State Management
+// Hooks and State Management (Unchanged)
 import { useRoomSocket } from "@/app/hooks/useRoomSocket";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRoomStore } from "@/store/useRoomStore";
 
-// Feature Components
+// Feature Components (Already styled)
 import { Player } from "@/components/features/room/Player";
 import { Queue } from "@/components/features/room/Queue";
 import { UserList } from "@/components/features/room/UserList";
 import { Spinner } from "@/components/ui/Spinner";
 
 export default function RoomPage() {
+  // --- All original hooks and state logic are preserved ---
   const params = useParams();
   const router = useRouter();
-
-  const roomId = Array.isArray(params.roomId)
-    ? params.roomId[0]
-    : params.roomId;
+  const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
 
   const { authStatus, initializeAuth } = useAuthStore();
   const isConnected = useRoomStore((state) => state.isConnected);
-  const [show, setShow] = useState(false);
 
   useEffect(() => {
     initializeAuth();
@@ -43,79 +40,65 @@ export default function RoomPage() {
 
   const socket = useRoomSocket(roomId);
 
-  // Set show to true once connected to trigger the animation
-  useEffect(() => {
-    if (isConnected && authStatus === "authenticated") {
-      setShow(true);
-    }
-  }, [isConnected, authStatus]);
-
-  // Animation for the main layout
-  const transitions = useTransition(show, {
-    from: { opacity: 0, y: 50 },
-    enter: { opacity: 1, y: 0 },
-    config: { tension: 220, friction: 40 },
-  });
-
-  if (authStatus === "loading" || !roomId) {
+  // --- Loading States (Restyled for consistency) ---
+  if (authStatus === "loading" || !roomId || !isConnected) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#F3EFEA] text-[#212121]">
         <Spinner size="lg" />
-        <p className="mt-4 text-lg">Loading...</p>
-      </div>
-    );
-  }
-
-  if (authStatus !== "authenticated" || !isConnected) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white">
-        <Spinner size="lg" />
-        <p className="mt-4 text-lg">Connecting to room...</p>
+        <p className="mt-4 text-lg">
+          {isConnected ? "Loading..." : "Connecting to room..."}
+        </p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-l from-gray-900 via-rose-700 to-black p-4 lg:p-6">
-      {transitions(
-        (style, item) =>
-          item && (
-            <animated.div style={style}>
-              <header className="mx-auto max-w-screen-xl mb-4 flex justify-between items-center">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-lime-200 to-neutral-900 bg-clip-text text-transparent">
-                  Sound Lab Room
-                </h1>
-                <Link
-                  href="/"
-                  className="flex items-center gap-2 rounded-md bg-gradient-to-tr
-from-gray-900
-via-rose-700
-to-black px-3 py-2 text-sm text-white transition-colors hover:bg-purple-500"
-                >
-                  <FaHome />
-                  <span className="bg-gray bg-gradient-to-r from-lime-200 to-neutral-900 bg-clip-text text-transparent">
-                    Home
-                  </span>
-                </Link>
-              </header>
-              <div className="mx-auto grid max-w-screen-xl grid-cols-1 gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-2">
-                  <Player socket={socket} />
+    // Main container with the new background color and padding.
+    <main className="min-h-screen bg-[#F3EFEA] p-4 lg:p-6">
+      <AnimatePresence>
+        {authStatus === "authenticated" && isConnected && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            {/* Header restyled with the new design language. */}
+            <header className="mx-auto max-w-screen-xl mb-6 flex justify-between items-center">
+              <h1 className="text-2xl font-black text-[#212121] tracking-tighter">
+               <Link href={"/"}>
+                  SOUND LAB
+               </Link>
+             
+              </h1>
+              <Link
+                href="/"
+                className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-[#212121] text-white transition-colors hover:bg-neutral-700"
+              >
+                <Home size={16} />
+                <span>Home</span>
+              </Link>
+            </header>
+
+            {/* Main layout grid (logic unchanged). */}
+            <div className="mx-auto grid max-w-screen-xl grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <Player socket={socket} />
+              </div>
+
+              {/* Sidebar container for Queue and UserList. */}
+              <div className="flex h-[88vh] flex-col gap-6">
+                <div className="flex-grow">
+                  <Queue socket={socket} />
                 </div>
-                <div className="flex h-[85vh] flex-col gap-6">
-                  <div className="flex-grow">
-                    <Queue socket={socket} />
-                  </div>
-                  <div className="flex-shrink-0">
-                    <div className="h-[20vh] min-h-[150px]">
-                      <UserList />
-                    </div>
-                  </div>
+                <div className="h-[25vh] min-h-[180px]">
+                  <UserList />
                 </div>
               </div>
-            </animated.div>
-          )
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
