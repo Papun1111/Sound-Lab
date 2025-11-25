@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef } from 'react';
 import { Renderer, Program, Mesh, Triangle } from 'ogl';
 
@@ -172,6 +173,7 @@ export const Plasma: React.FC<PlasmaProps> = ({
     let raf = 0;
     const t0 = performance.now();
     const loop = (t: number) => {
+      // eslint-disable-next-line prefer-const
       let timeValue = (t - t0) * 0.001;
       if (direction === 'pingpong') {
         const pingpongDuration = 10;
