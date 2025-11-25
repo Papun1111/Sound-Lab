@@ -18,7 +18,7 @@ import { Player } from "@/components/features/room/Player";
 import { Queue } from "@/components/features/room/Queue";
 import { UserList } from "@/components/features/room/UserList";
 import { Spinner } from "@/components/ui/Spinner";
-
+import Plasma from "@/components/Plasma";
 export default function RoomPage() {
   // --- All original hooks and state logic are preserved ---
   const params = useParams();
@@ -82,6 +82,17 @@ export default function RoomPage() {
 
             {/* Main layout grid (logic unchanged). */}
             <div className="mx-auto grid max-w-screen-xl grid-cols-1 gap-6 lg:grid-cols-3">
+              
+<div style={{ width: '100%', height: '600px', position: 'relative' }}>
+  <Plasma 
+    color="#ff6b35"
+    speed={0.6}
+    direction="forward"
+    scale={1.1}
+    opacity={0.8}
+    mouseInteractive={true}
+  />
+  </div>
               <div className="lg:col-span-2">
                 <Player socket={socket} />
               </div>
