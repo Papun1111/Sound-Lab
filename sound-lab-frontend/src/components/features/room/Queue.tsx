@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +16,6 @@ import { AxiosError } from 'axios';
 import { Socket } from 'socket.io-client';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { apiClient } from '@/lib/axios';
-import Image from 'next/image';
 
 const listItemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -209,7 +209,7 @@ export const Queue: React.FC<QueueProps> = ({ socket }) => {
             {recommendations.length > 0 ? recommendations.map(rec => (
               <div key={rec.id} className="group relative flex items-center gap-2 p-2 rounded hover:bg-neutral-50 transition-colors cursor-pointer border border-transparent hover:border-neutral-200">
                  <div className="relative w-12 h-9 bg-neutral-200 flex-shrink-0 overflow-hidden rounded-sm shadow-sm">
-                    <Image src={rec.thumbnail} alt={rec.title} className="w-full h-full object-cover" />
+                    <img src={rec.thumbnail} alt={rec.title} className="w-full h-full object-cover" />
                  </div>
                  <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-neutral-800 truncate" title={rec.title}>

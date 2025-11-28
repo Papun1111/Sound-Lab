@@ -60,7 +60,7 @@ export const Player: React.FC<PlayerProps> = ({ socket }) => {
       } catch (error) {
           console.error("Error syncing player state:", error);
       }
-      setTimeout(() => { isServerUpdate.current = false; }, 500);
+      setTimeout(() => { isServerUpdate.current = false; }, 200);
     };
     syncPlayer();
   }, [currentlyPlaying]);
