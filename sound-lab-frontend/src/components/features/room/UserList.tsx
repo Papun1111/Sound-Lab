@@ -4,16 +4,9 @@ import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useRoomStore } from '@/store/useRoomStore';
 import { UserCircle, Copy, Check } from 'lucide-react';
-import { motion, AnimatePresence, Variants } from 'framer-motion'; // Replaced react-spring with framer-motion
-
-// --- Type Definition (Unchanged) ---
-interface User {
-  userId: string;
-  username: string;
-}
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 // --- Framer Motion Variants ---
-// This replaces the useTransition hook from react-spring.
 const userItemVariants: Variants = {
   hidden: { opacity: 0, x: -20 },
   visible: { opacity: 1, x: 0 },
@@ -21,7 +14,6 @@ const userItemVariants: Variants = {
 };
 
 export const UserList = () => {
-  // --- State and Logic (Unchanged) ---
   const users = useRoomStore((state) => state.users);
   const params = useParams();
   const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
@@ -36,12 +28,12 @@ export const UserList = () => {
   };
   
   return (
-    // Main container with consistent styling.
+    // Main container restyled with a clean, white background and a simple border.
     <div className="h-full rounded-lg bg-white border border-neutral-200 p-4 flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-bold text-[#212121]">In Room ({users.length})</h3>
         
-        {/* "Copy ID" button animated with framer-motion. */}
+        {/* "Copy ID" button animated with framer-motion and updated colors. */}
         <motion.button
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -50,7 +42,7 @@ export const UserList = () => {
           className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
             copied
               ? 'bg-green-600 text-white'
-              : 'bg-[#212121] text-white hover:bg-neutral-700'
+              : 'bg-[#212121] text-white hover:bg-[#D63426]'
           }`}
           title="Copy Room ID"
         >
@@ -70,15 +62,18 @@ export const UserList = () => {
               animate="visible"
               exit="exit"
               transition={{ duration: 0.3, ease: "easeOut", delay: index * 0.04 }} // Staggered delay
-              className="flex items-center gap-3"
+              className="flex items-center gap-3 p-2 rounded hover:bg-neutral-50 transition-colors"
             >
-              <UserCircle className="h-6 w-6 text-neutral-400 flex-shrink-0" />
-              <p className="text-sm text-neutral-700 truncate" title={user.userId}>
+              <UserCircle className="h-8 w-8 text-neutral-400 flex-shrink-0" />
+              <p className="text-sm font-medium text-neutral-800 truncate" title={user.userId}>
                 {user.userId}
               </p>
             </motion.div>
           ))}
         </AnimatePresence>
+        {users.length === 0 && (
+            <div className="text-sm text-neutral-500 text-center pt-8">No users connected.</div>
+        )}
       </div>
     </div>
   );

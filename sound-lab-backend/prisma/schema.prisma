@@ -9,17 +9,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String?  @unique // Made optional for flexibility
-  password  String?  // ✨ CHANGE: Made optional (add '?')
-  googleId  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(cuid())
+  email             String   @unique
+  username          String?  @unique // Made optional for flexibility
+  password          String?  // Optional for Google users
+  googleId          String?  // Stores Google ID
+  
+  // ✨ NEW: Store tokens to make API calls on behalf of the user (e.g. fetch playlists)
+  googleAccessToken String? 
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  // ... keep your existing relations below ...
+  // Relations
   ownedRooms   Room[]         @relation("RoomOwner")
   queuedVideos QueuedVideo[]
   votes        Vote[]
@@ -57,9 +60,6 @@ model QueuedVideo {
 
   // Relation to votes
   votes Vote[]
-
-  // You can add an 'order' field if you want to persist the queue order
-  // order Int
 }
 
 model Vote {

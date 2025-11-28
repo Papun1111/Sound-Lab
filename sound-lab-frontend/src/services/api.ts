@@ -11,6 +11,13 @@ interface AuthResponse {
   token: string;
 }
 
+// Define the shape of a trending video object
+export interface TrendingVideo {
+  id: string;
+  title: string;
+  thumbnail: string;
+}
+
 /**
  * Sends a signup request to the backend.
  */
@@ -48,5 +55,23 @@ export const addVideoToRoom = async (roomId: string, youtubeUrl: string, token: 
     { youtubeUrl },
     { headers: { Authorization: `Bearer ${token}` } }
   );
+  return data;
+};
+
+/**
+ * ✨ NEW: Fetches currently trending music videos from the backend.
+ */
+export const getTrendingVideos = async (): Promise<TrendingVideo[]> => {
+  const { data } = await apiClient.get('/youtube/trending');
+  return data;
+};
+
+/**
+ * ✨ NEW: Searches for YouTube videos based on a query.
+ */
+export const searchYoutubeVideos = async (query: string): Promise<TrendingVideo[]> => {
+  const { data } = await apiClient.get('/youtube/search', {
+    params: { q: query }
+  });
   return data;
 };
