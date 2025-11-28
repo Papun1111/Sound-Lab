@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // ✨ Added useSearchParams
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { createRoom } from "@/services/api";
 import { Button } from "@/components/ui/Button";
@@ -11,9 +11,8 @@ import { AxiosError } from "axios";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
 import { Instagram, Twitter, Facebook } from "lucide-react";
-// Import the Galaxy component
-
 import RippleGrid from "@/components/RippleGrid";
+
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -31,36 +30,32 @@ const itemVariants: Variants = {
   },
 };
 
-// --- Main Component ---
-
-export default function HomePage() {
-  // --- STATE AND LOGIC (UNCHANGED) ---
+// ✨ Split the content into a separate component to handle useSearchParams safely
+function HomeContent() {
   const [roomName, setRoomName] = useState("");
   const [joinRoomId, setJoinRoomId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
-  const searchParams = useSearchParams(); // ✨ Hook to read URL params
-  // ✨ Added 'login' to destructuring to handle the token
+  // ✨ Hook to read URL params for Google OAuth
+  const searchParams = useSearchParams();
   const { authStatus, token, initializeAuth, logout, login } = useAuthStore();
 
-  // ✨ UPDATED: Check for Google OAuth token on mount
+  // ✨ Check for Google OAuth token on mount
   useEffect(() => {
     const urlToken = searchParams.get('token');
     
     if (urlToken) {
-      // If token exists in URL (returned from Google), log the user in immediately
+      // If token exists in URL, log the user in immediately
       login(urlToken);
       // Clean the URL
       router.replace('/');
     } else {
-      // Otherwise check localStorage as usual
       initializeAuth();
     }
   }, [initializeAuth, searchParams, login, router]);
 
-  // --- CORE FUNCTIONALITY (UNCHANGED) ---
   const handleCreateRoom = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (authStatus !== "authenticated" || !token) {
@@ -98,31 +93,27 @@ export default function HomePage() {
     { title: "DISCOVER MUSIC", image: "https://placehold.co/600x400/D63426/F3EFEA?text=Discover" },
   ];
   
-  // --- UI ---
   return (
-    // Changed base bg to dark (#050505) and text to light (#F3EFEA) for contrast with Galaxy
     <div className="min-h-screen w-full bg-[#050505] text-[#F3EFEA] antialiased relative overflow-hidden">
       
       {/* --- GALAXY BACKGROUND --- */}
       <div className="fixed inset-0 z-0">
           <RippleGrid
-    enableRainbow={true}
-    gridColor="#ffffff"
-    rippleIntensity={0.05}
-    gridSize={20}
-    gridThickness={15}
-    mouseInteraction={true}
-
-    mouseInteractionRadius={2.5}
-    opacity={0.8}
-  />
+            enableRainbow={true}
+            gridColor="#ffffff"
+            rippleIntensity={0.05}
+            gridSize={20}
+            gridThickness={15}
+            mouseInteraction={true}
+            mouseInteractionRadius={2.5}
+            opacity={0.8}
+          />
       </div>
 
-      {/* --- CONTENT WRAPPER (z-10 to sit above Galaxy) --- */}
+      {/* --- CONTENT WRAPPER --- */}
       <div className="relative z-10">
       
         {/* --- Header Section --- */}
-        {/* Added backdrop-blur and transparency to show Galaxy behind */}
         <header className="fixed top-0 z-50 w-full bg-black/30 backdrop-blur-md border-b border-white/10 text-[#F3EFEA]">
           <nav className="flex items-center justify-between p-4 max-w-7xl mx-auto">
             <Link href="/" className="text-2xl font-black tracking-tighter">
@@ -147,7 +138,6 @@ export default function HomePage() {
                   <motion.h1 variants={itemVariants} className="text-[10vw] md:text-8xl lg:text-9xl font-black leading-none tracking-tighter text-white mix-blend-overlay">
                       YOUR MUSIC,
                   </motion.h1>
-                  {/* Kept the Red accent */}
                   <motion.h1 variants={itemVariants} className="text-[10vw] md:text-8xl lg:text-9xl font-black leading-none tracking-tighter text-[#D63426]">
                       IN SYNC.
                   </motion.h1>
@@ -179,7 +169,6 @@ export default function HomePage() {
           </section>
           
           {/* --- Room Creation/Joining Section --- */}
-          {/* Made transparent/dark to fit theme */}
           <section id="about" className="py-24 px-4 bg-black/40 backdrop-blur-sm border-t border-white/5">
               <div className="max-w-2xl mx-auto text-center">
                     <h2 className="text-5xl md:text-6xl font-black tracking-tighter text-white">GET STARTED</h2>
@@ -193,7 +182,6 @@ export default function HomePage() {
                                   <Input
                                       type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)}
                                       placeholder="Name your new room..."
-                                      // Updated Input styles for Dark Mode
                                       className="bg-black/50 border-2 border-neutral-700 text-[#F3EFEA] placeholder:text-neutral-500 text-center text-lg h-14 rounded-none focus:border-[#D63426] transition-colors w-full"
                                       required disabled={isLoading}
                                   />
@@ -211,11 +199,10 @@ export default function HomePage() {
                                   <Input
                                       type="text" value={joinRoomId} onChange={(e) => setJoinRoomId(e.target.value)}
                                       placeholder="Paste an existing Room ID..."
-                                      // Updated Input styles for Dark Mode
                                       className="bg-black/50 border-2 border-neutral-700 text-[#F3EFEA] placeholder:text-neutral-500 text-center text-lg h-14 rounded-none focus:border-[#D63426] transition-colors w-full"
                                       required
                                   />
-                                  <Button type="submit" className="w-full sm:w-auto h-14 px-10 text-lg bg-black text-black rounded-none hover:bg-[#D63426] hover:text-white transition-colors">
+                                  <Button type="submit" className="w-full sm:w-auto h-14 px-10 text-lg bg-white text-black rounded-none hover:bg-[#D63426] hover:text-white transition-colors">
                                       Join Room
                                   </Button>
                               </div>
@@ -237,7 +224,7 @@ export default function HomePage() {
           <footer className="w-full p-10 md:p-20 bg-black text-[#F3EFEA] border-t border-white/10">
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
                   <div>
-                      <h3 className="text-6xl  md:text-8xl font-black tracking-tighter leading-none text-neutral-100">
+                      <h3 className="text-6xl md:text-8xl font-black tracking-tighter leading-none text-neutral-800">
                           GET IN SYNC.
                       </h3>
                       <p className="mt-4 text-neutral-500">Sound Lab &copy; {new Date().getFullYear()}</p>
@@ -258,5 +245,18 @@ export default function HomePage() {
         </main>
       </div>
     </div>
+  );
+}
+
+// ✨ WRAP IN SUSPENSE to fix prerendering errors with useSearchParams
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen w-full bg-[#050505] flex items-center justify-center text-white">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
