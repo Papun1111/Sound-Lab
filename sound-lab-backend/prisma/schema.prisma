@@ -9,15 +9,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  username  String   @unique
-  password  String
+  username  String?  @unique // Made optional for flexibility
+  password  String?  // ✨ CHANGE: Made optional (add '?')
+  googleId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
+  // ... keep your existing relations below ...
   ownedRooms   Room[]         @relation("RoomOwner")
   queuedVideos QueuedVideo[]
   votes        Vote[]

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // ✨ Added useSearchParams
 import { useAuthStore } from "@/store/useAuthStore";
 import { createRoom } from "@/services/api";
 import { Button } from "@/components/ui/Button";
@@ -41,11 +41,24 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
-  const { authStatus, token, initializeAuth, logout } = useAuthStore();
+  const searchParams = useSearchParams(); // ✨ Hook to read URL params
+  // ✨ Added 'login' to destructuring to handle the token
+  const { authStatus, token, initializeAuth, logout, login } = useAuthStore();
 
+  // ✨ UPDATED: Check for Google OAuth token on mount
   useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+    const urlToken = searchParams.get('token');
+    
+    if (urlToken) {
+      // If token exists in URL (returned from Google), log the user in immediately
+      login(urlToken);
+      // Clean the URL
+      router.replace('/');
+    } else {
+      // Otherwise check localStorage as usual
+      initializeAuth();
+    }
+  }, [initializeAuth, searchParams, login, router]);
 
   // --- CORE FUNCTIONALITY (UNCHANGED) ---
   const handleCreateRoom = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -169,10 +182,10 @@ export default function HomePage() {
           {/* Made transparent/dark to fit theme */}
           <section id="about" className="py-24 px-4 bg-black/40 backdrop-blur-sm border-t border-white/5">
               <div className="max-w-2xl mx-auto text-center">
-                   <h2 className="text-5xl md:text-6xl font-black tracking-tighter text-white">GET STARTED</h2>
-                   <p className="mt-4 text-neutral-400 max-w-lg mx-auto">
-                     Create a new listening room for your friends or jump into an existing one with a Room ID.
-                   </p>
+                    <h2 className="text-5xl md:text-6xl font-black tracking-tighter text-white">GET STARTED</h2>
+                    <p className="mt-4 text-neutral-400 max-w-lg mx-auto">
+                      Create a new listening room for your friends or jump into an existing one with a Room ID.
+                    </p>
                   {authStatus === 'authenticated' ? (
                       <motion.div variants={itemVariants} className="mt-12 w-full">
                           <form onSubmit={handleCreateRoom} className="space-y-4 mb-8">
@@ -187,8 +200,8 @@ export default function HomePage() {
                                   <Button type="submit" disabled={isLoading} className="w-full sm:w-auto h-14 px-10 text-lg bg-[#D63426] text-white rounded-none hover:bg-white hover:text-black transition-colors">
                                       {isLoading ? <Spinner size="sm" /> : 'Create'}
                                   </Button>
-                              </div>
-                              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                               </div>
+                               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                           </form>
                           
                           <div className="text-center font-bold text-neutral-600 my-6">OR</div>
@@ -202,7 +215,7 @@ export default function HomePage() {
                                       className="bg-black/50 border-2 border-neutral-700 text-[#F3EFEA] placeholder:text-neutral-500 text-center text-lg h-14 rounded-none focus:border-[#D63426] transition-colors w-full"
                                       required
                                   />
-                                  <Button type="submit" className="w-full sm:w-auto h-14 px-10 text-lg bg-white text-black rounded-none hover:bg-[#D63426] hover:text-white transition-colors">
+                                  <Button type="submit" className="w-full sm:w-auto h-14 px-10 text-lg bg-black text-black rounded-none hover:bg-[#D63426] hover:text-white transition-colors">
                                       Join Room
                                   </Button>
                               </div>
@@ -224,7 +237,7 @@ export default function HomePage() {
           <footer className="w-full p-10 md:p-20 bg-black text-[#F3EFEA] border-t border-white/10">
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
                   <div>
-                      <h3 className="text-6xl md:text-8xl font-black tracking-tighter leading-none text-neutral-800">
+                      <h3 className="text-6xl  md:text-8xl font-black tracking-tighter leading-none text-neutral-100">
                           GET IN SYNC.
                       </h3>
                       <p className="mt-4 text-neutral-500">Sound Lab &copy; {new Date().getFullYear()}</p>
@@ -233,10 +246,10 @@ export default function HomePage() {
                       <a href="#" className="p-3 border border-neutral-800 hover:border-[#D63426] hover:text-[#D63426] transition-all">
                           <Instagram size={24} />
                       </a>
-                       <a href="#" className="p-3 border border-neutral-800 hover:border-[#D63426] hover:text-[#D63426] transition-all">
+                        <a href="#" className="p-3 border border-neutral-800 hover:border-[#D63426] hover:text-[#D63426] transition-all">
                           <Twitter size={24} />
                       </a>
-                       <a href="#" className="p-3 border border-neutral-800 hover:border-[#D63426] hover:text-[#D63426] transition-all">
+                        <a href="#" className="p-3 border border-neutral-800 hover:border-[#D63426] hover:text-[#D63426] transition-all">
                           <Facebook size={24} />
                       </a>
                   </div>
