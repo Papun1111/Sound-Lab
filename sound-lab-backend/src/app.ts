@@ -3,8 +3,17 @@ import cors from 'cors';
 import config from './config/index.js';
 import apiRouter from './api/index.js';
 import { AppError } from './utils/AppError.js';
-
+import { rateLimit } from 'express-rate-limit'
 const app: Express = express();
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000, 
+	limit: 100,
+	standardHeaders: 'draft-8', 
+	legacyHeaders: false, 
+	ipv6Subnet: 56, 
+
+})
+
 
 app.use(
   cors({
@@ -12,7 +21,7 @@ app.use(
     credentials: true,
   })
 );
-
+app.use(limiter)
 
 app.use(express.json());
 
