@@ -224,7 +224,7 @@ function HomeContent() {
           <footer className="w-full p-10 md:p-20 bg-black text-[#F3EFEA] border-t border-white/10">
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
                   <div>
-                      <h3 className="text-6xl md:text-8xl font-black tracking-tighter leading-none text-neutral-800">
+                      <h3 className="text-6xl md:text-8xl font-black tracking-tighter leading-none text-neutral-100">
                           GET IN SYNC.
                       </h3>
                       <p className="mt-4 text-neutral-500">Sound Lab &copy; {new Date().getFullYear()}</p>
